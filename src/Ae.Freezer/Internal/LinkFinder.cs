@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Ae.Freezer.Crawler.Internal
+namespace Ae.Freezer.Internal
 {
     internal sealed class LinkFinder : ILinkFinder
     {

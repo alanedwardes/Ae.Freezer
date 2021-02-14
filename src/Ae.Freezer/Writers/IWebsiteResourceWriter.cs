@@ -1,10 +1,10 @@
-﻿using Ae.Freezer.Crawler.Entities;
+﻿using Ae.Freezer.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ae.Freezer.Crawler.Writers
+namespace Ae.Freezer.Writers
 {
     public interface IWebsiteResourceWriter
     {

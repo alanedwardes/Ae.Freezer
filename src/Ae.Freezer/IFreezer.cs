@@ -1,8 +1,7 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ae.Freezer.Crawler
+namespace Ae.Freezer
 {
     public interface IFreezer
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 
-namespace Ae.Freezer.Crawler.Entities
+namespace Ae.Freezer.Entities
 {
     public sealed class WebsiteResource : IDisposable
     {

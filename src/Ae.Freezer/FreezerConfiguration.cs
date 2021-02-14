@@ -1,10 +1,10 @@
-﻿using Ae.Freezer.Crawler.Writers;
+﻿using Ae.Freezer.Writers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Ae.Freezer.Crawler
+namespace Ae.Freezer
 {
     public sealed class FreezerConfiguration : IFreezerConfiguration
     {

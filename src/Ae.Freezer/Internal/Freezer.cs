@@ -1,5 +1,5 @@
-﻿using Ae.Freezer.Crawler.Entities;
-using Ae.Freezer.Crawler.Writers;
+﻿using Ae.Freezer.Entities;
+using Ae.Freezer.Writers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ae.Freezer.Crawler.Internal
+namespace Ae.Freezer.Internal
 {
     internal sealed class Freezer : IFreezer
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Ae.Freezer.Crawler.Internal
+namespace Ae.Freezer.Internal
 {
     internal interface ILinkFinder
     {

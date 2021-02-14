@@ -1,5 +1,4 @@
 ﻿using Ae.Freezer.Aws;
-using Ae.Freezer.Crawler;
 using Amazon.CloudFront;
 using Amazon.S3;
 using Microsoft.Extensions.DependencyInjection;

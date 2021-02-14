@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <WarningsAsErrors>true</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ae.Freezer.Crawler\Ae.Freezer.Crawler.csproj" />
+    <ProjectReference Include="..\Ae.Freezer\Ae.Freezer.csproj" />
   </ItemGroup>
 
 </Project>

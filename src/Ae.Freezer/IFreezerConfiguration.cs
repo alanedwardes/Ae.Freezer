@@ -1,9 +1,9 @@
-﻿using Ae.Freezer.Crawler.Writers;
+﻿using Ae.Freezer.Writers;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Ae.Freezer.Crawler
+namespace Ae.Freezer
 {
     public interface IFreezerConfiguration
     {

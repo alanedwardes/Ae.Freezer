@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ae.Freezer.Crawler", "src\A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ae.Freezer.Aws", "src\Ae.Freezer.Aws\Ae.Freezer.Aws.csproj", "{FA1B0BB6-5046-4BC0-8A52-089844F159CF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ae.Freezer", "src\Ae.Freezer\Ae.Freezer.csproj", "{0BCF5075-CEFE-4F28-A9F9-F0CF027D9E4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{FA1B0BB6-5046-4BC0-8A52-089844F159CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA1B0BB6-5046-4BC0-8A52-089844F159CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA1B0BB6-5046-4BC0-8A52-089844F159CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BCF5075-CEFE-4F28-A9F9-F0CF027D9E4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BCF5075-CEFE-4F28-A9F9-F0CF027D9E4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BCF5075-CEFE-4F28-A9F9-F0CF027D9E4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BCF5075-CEFE-4F28-A9F9-F0CF027D9E4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -39,6 +45,7 @@ Global
 		{58C43081-9DB1-4451-BC51-939D35D30DDE} = {A4708FFE-7E9F-4213-98DC-BC7E10E1BFDB}
 		{2AD2B784-1854-4926-A437-A6A79FFBCBDE} = {B0111351-65BA-4A12-8F24-7E27D56C1BC3}
 		{FA1B0BB6-5046-4BC0-8A52-089844F159CF} = {B0111351-65BA-4A12-8F24-7E27D56C1BC3}
+		{0BCF5075-CEFE-4F28-A9F9-F0CF027D9E4E} = {B0111351-65BA-4A12-8F24-7E27D56C1BC3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1C32D0E9-91EF-434B-AD97-CE9DA3122CBC}

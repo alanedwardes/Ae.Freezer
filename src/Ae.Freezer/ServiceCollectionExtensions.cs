@@ -1,7 +1,7 @@
-﻿using Ae.Freezer.Crawler.Internal;
+﻿using Ae.Freezer.Internal;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Ae.Freezer.Crawler
+namespace Ae.Freezer
 {
     public static class ServiceCollectionExtensions
     {

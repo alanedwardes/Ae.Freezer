@@ -1,4 +1,4 @@
-﻿namespace Ae.Freezer.Crawler.Entities
+﻿namespace Ae.Freezer.Entities
 {
     public enum WebsiteResourceType
     {

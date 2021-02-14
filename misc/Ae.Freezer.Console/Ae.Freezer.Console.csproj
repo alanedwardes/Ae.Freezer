@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ae.Freezer.Aws\Ae.Freezer.Aws.csproj" />
-    <ProjectReference Include="..\..\src\Ae.Freezer.Crawler\Ae.Freezer.Crawler.csproj" />
+    <ProjectReference Include="..\..\src\Ae.Freezer\Ae.Freezer.csproj" />
   </ItemGroup>
 
 </Project>

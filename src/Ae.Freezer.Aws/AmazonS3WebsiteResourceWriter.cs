@@ -1,5 +1,5 @@
-﻿using Ae.Freezer.Crawler.Entities;
-using Ae.Freezer.Crawler.Writers;
+﻿using Ae.Freezer.Entities;
+using Ae.Freezer.Writers;
 using Amazon.CloudFront;
 using Amazon.CloudFront.Model;
 using Amazon.S3;
