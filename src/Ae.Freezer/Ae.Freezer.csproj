@@ -1,14 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-	<WarningsAsErrors>true</WarningsAsErrors>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Version>1.0.0</Version>
+		<WarningsAsErrors>true</WarningsAsErrors>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.12" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.12" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.12" />
-  </ItemGroup>
+		<Authors>alanedwardes</Authors>
+		<Description>A C# library to crawl a dynamic website and turn it into static content, servable via a CDN.</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/alanedwardes/Ae.Freezer</PackageProjectUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.12" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="3.1.12" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.12" />
+	</ItemGroup>
 
 </Project>
