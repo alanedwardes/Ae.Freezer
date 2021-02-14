@@ -2,7 +2,9 @@
 using Ae.Freezer.Writers;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,32 +33,38 @@ namespace Ae.Freezer.Internal
 
             var resourceWriter = freezerConfiguration.ResourceWriter(_serviceProvider);
 
-            var startResource = await httpClient.GetWebsiteResource(freezerConfiguration.StartPath, freezerConfiguration);
+            var startResource = new WebsiteResource { RelativeUri = freezerConfiguration.StartPath };
+            await httpClient.GetWebsiteResource(startResource, freezerConfiguration);
 
-            var resources = new Dictionary<Uri, WebsiteResource> { { startResource.RelativeUri, startResource } };
+            var resources = new ConcurrentDictionary<Uri, WebsiteResource>();
+            resources.TryAdd(startResource.RelativeUri, startResource);
 
             foreach (var additionalResource in freezerConfiguration.AdditionalResources)
             {
-                var resource = await httpClient.GetWebsiteResource(additionalResource, freezerConfiguration);
+                var resource = new WebsiteResource { RelativeUri = additionalResource };
+                await httpClient.GetWebsiteResource(resource, freezerConfiguration);
                 if (resource.ResponseMessage.IsSuccessStatusCode)
                 {
-                    resources.Add(additionalResource, resource);
+                    resources.TryAdd(additionalResource, resource);
                     await resourceWriter.WriteResource(resource, token);
                 }
             }
 
             if (freezerConfiguration.NotFoundPage != null)
             {
-                var resource = await httpClient.GetWebsiteResource(freezerConfiguration.NotFoundPage, freezerConfiguration);
-                resources.Add(freezerConfiguration.NotFoundPage, resource);
+                var resource = new WebsiteResource { RelativeUri = freezerConfiguration.NotFoundPage };
+                await httpClient.GetWebsiteResource(resource, freezerConfiguration);
+                resources.TryAdd(freezerConfiguration.NotFoundPage, resource);
                 await resourceWriter.WriteResource(resource, token);
             }
 
             await resourceWriter.WriteResource(startResource, token);
 
-            await FindResourcesRecursive(httpClient, resourceWriter, startResource, freezerConfiguration, resources, token);
+            var tasks = new List<Task>();
+            await FindResourcesRecursive(httpClient, resourceWriter, startResource.TextContent, freezerConfiguration, resources, tasks, token);
+            await Task.WhenAll(tasks);
 
-            await resourceWriter.FlushResources(resources.Keys, token);
+            await resourceWriter.FlushResources(resources.Select(x => x.Key).ToArray(), token);
 
             foreach (var resource in resources)
             {
@@ -64,27 +72,26 @@ namespace Ae.Freezer.Internal
             }
         }
 
-        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, WebsiteResource websiteResource, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, CancellationToken token)
+        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, string textContent, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, IList<Task> tasks, CancellationToken token)
         {
-            foreach (var uri in _linkFinder.GetUrisFromLinks(freezerConfiguration.BaseAddress, websiteResource.TextContent))
+            foreach (var uri in _linkFinder.GetUrisFromLinks(freezerConfiguration.BaseAddress, textContent))
             {
-                if (resources.ContainsKey(uri))
+                var resource = new WebsiteResource { RelativeUri = uri };
+                if (!resources.TryAdd(uri, resource))
                 {
                     continue;
                 }
 
-                var resource = await httpClient.GetWebsiteResource(uri, freezerConfiguration);
+                await httpClient.GetWebsiteResource(resource, freezerConfiguration);
                 if (!resource.ResponseMessage.IsSuccessStatusCode)
                 {
                     _logger.LogError("Resource {RelativeUri} responded with code {StatusCode}", resource.RelativeUri, resource.ResponseMessage.StatusCode);
                     continue;
                 }
 
-                resources.Add(uri, resource);
-
                 if (resource.ResourceType == WebsiteResourceType.Text)
                 {
-                    await FindResourcesRecursive(httpClient, resourceWriter, resource, freezerConfiguration, resources, token);
+                    tasks.Add(FindResourcesRecursive(httpClient, resourceWriter, resource.TextContent, freezerConfiguration, resources, tasks, token));
                 }
 
                 await resourceWriter.WriteResource(resource, token);
