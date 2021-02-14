@@ -75,7 +75,7 @@ namespace Ae.Freezer.Internal
                 await resourceWriter.WriteResource(resource, token);
             }
 
-            var tasks = new List<Task>();
+            var tasks = new ConcurrentBag<Task>();
             await FindResourcesRecursive(httpClient, resourceWriter, startResource.TextContent, freezerConfiguration, resources, tasks, token);
             await Task.WhenAll(tasks);
 
@@ -87,7 +87,7 @@ namespace Ae.Freezer.Internal
             await resourceWriter.FlushResources(resources.Select(x => x.Key).ToArray(), token);
         }
 
-        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, string textContent, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, IList<Task> tasks, CancellationToken token)
+        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, string textContent, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, ConcurrentBag<Task> tasks, CancellationToken token)
         {
             foreach (var uri in _linkFinder.GetUrisFromLinks(freezerConfiguration.BaseAddress, textContent))
             {
