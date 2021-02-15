@@ -36,46 +36,19 @@ namespace Ae.Freezer.Internal
 
             var resources = new ConcurrentDictionary<Uri, WebsiteResource>();
 
-            var startResource = new WebsiteResource(freezerConfiguration.StartPath);
-            resources.TryAdd(startResource.RelativeUri, startResource);
-            await httpClient.GetWebsiteResource(startResource, freezerConfiguration, token);
-            if (!startResource.ResponseMessage.IsSuccessStatusCode)
+            var tasks = new List<Task>
             {
-                _logger.LogCritical("Resource {RelativeUri} responded with code {StatusCode}", startResource.RelativeUri, startResource.ResponseMessage.StatusCode);
-                return;
-            }
-
-            await resourceWriter.WriteResource(startResource, token);
-
-            if (freezerConfiguration.NotFoundPage != null)
-            {
-                var resource = new WebsiteResource(freezerConfiguration.NotFoundPage);
-                resources.TryAdd(freezerConfiguration.NotFoundPage, startResource);
-                await httpClient.GetWebsiteResource(resource, freezerConfiguration, token);
-                if (resource.ResponseMessage.StatusCode != HttpStatusCode.NotFound)
-                {
-                    _logger.LogCritical("Resource {RelativeUri} did not respond with 404, instead responded with {StatusCode}", startResource.RelativeUri, startResource.ResponseMessage.StatusCode);
-                    return;
-                }
-
-                await resourceWriter.WriteResource(resource, token);
-            }
+                GetWebsiteResource(httpClient, resourceWriter, resources, freezerConfiguration.NotFoundPage, freezerConfiguration, HttpStatusCode.NotFound, token)
+            };
 
             foreach (var additionalResource in freezerConfiguration.AdditionalResources)
             {
-                var resource = new WebsiteResource(additionalResource);
-                resources.TryAdd(additionalResource, resource);
-                await httpClient.GetWebsiteResource(resource, freezerConfiguration, token);
-                if (!resource.ResponseMessage.IsSuccessStatusCode)
-                {
-                    _logger.LogError("Resource {RelativeUri} responded with code {StatusCode}", startResource.RelativeUri, startResource.ResponseMessage.StatusCode);
-                    continue;
-                }
-
-                await resourceWriter.WriteResource(resource, token);
+                tasks.Add(GetWebsiteResource(httpClient, resourceWriter, resources, additionalResource, freezerConfiguration, null, token));
             }
 
-            await FindResourcesRecursive(httpClient, resourceWriter, startResource.TextContent, freezerConfiguration, resources, token);
+            tasks.Add(FindResourcesRecursive(httpClient, resourceWriter, freezerConfiguration.StartPath, freezerConfiguration, resources, token));
+
+            await Task.WhenAll(tasks);
 
             foreach (var resource in resources)
             {
@@ -85,30 +58,34 @@ namespace Ae.Freezer.Internal
             await resourceWriter.FlushResources(resources.Select(x => x.Key).ToArray(), token);
         }
 
-        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, string textContent, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, CancellationToken token)
+        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, Uri startUri, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, CancellationToken token)
         {
-            foreach (var uri in _linkFinder.GetUrisFromLinks(freezerConfiguration.BaseAddress, textContent))
+            var startResource = await GetWebsiteResource(httpClient, resourceWriter, resources, startUri, freezerConfiguration, null, token);
+            if (startResource == null || startResource.ResourceType != WebsiteResourceType.Text)
             {
-                var resource = new WebsiteResource(uri);
-                if (!resources.TryAdd(uri, resource))
-                {
-                    continue;
-                }
-
-                await httpClient.GetWebsiteResource(resource, freezerConfiguration, token);
-                if (!resource.ResponseMessage.IsSuccessStatusCode)
-                {
-                    _logger.LogError("Resource {RelativeUri} responded with code {StatusCode}", resource.RelativeUri, resource.ResponseMessage.StatusCode);
-                    continue;
-                }
-
-                if (resource.ResourceType == WebsiteResourceType.Text)
-                {
-                    await FindResourcesRecursive(httpClient, resourceWriter, resource.TextContent, freezerConfiguration, resources, token);
-                }
-
-                await resourceWriter.WriteResource(resource, token);
+                return;
             }
+
+            await Task.WhenAll(_linkFinder.GetUrisFromLinks(freezerConfiguration.BaseAddress, startResource.TextContent).Select(uri => FindResourcesRecursive(httpClient, resourceWriter, uri, freezerConfiguration, resources, token)));
+        }
+
+        private async Task<WebsiteResource> GetWebsiteResource(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, IDictionary<Uri, WebsiteResource> resources, Uri uri, IFreezerConfiguration freezerConfiguration, HttpStatusCode? expectedStatusCode, CancellationToken token)
+        {
+            var resource = new WebsiteResource(uri);
+            if (!resources.TryAdd(resource.RelativeUri, resource))
+            {
+                return null;
+            }
+
+            await httpClient.GetWebsiteResource(resource, freezerConfiguration, token);
+            if (resource.ResponseMessage.StatusCode != (expectedStatusCode ?? HttpStatusCode.OK))
+            {
+                _logger.LogCritical("Resource {RelativeUri} responded with code {StatusCode}", resource.RelativeUri, resource.ResponseMessage.StatusCode);
+                return null;
+            }
+
+            await resourceWriter.WriteResource(resource, token);
+            return resource;
         }
     }
 }
