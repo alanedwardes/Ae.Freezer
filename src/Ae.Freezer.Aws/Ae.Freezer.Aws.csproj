@@ -2,11 +2,11 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>0.0.3</Version>
+		<Version>0.0.4</Version>
 		<WarningsAsErrors>true</WarningsAsErrors>
 
 		<Authors>alanedwardes</Authors>
-		<Description>AWS tools to write website resources to S3.</Description>
+		<Description>A C# library to crawl a dynamic website and turn it into static content, servable via Amazon S3 with optional CloudFront invalidation.</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/alanedwardes/Ae.Freezer</PackageProjectUrl>
 	</PropertyGroup>
