@@ -8,7 +8,9 @@ namespace Ae.Freezer.Writers
 {
     public sealed class NullWebsiteResourceWriter : IWebsiteResourceWriter
     {
-        public Task FlushResources(IReadOnlyCollection<Uri> resources, CancellationToken token) => Task.CompletedTask;
+        public Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token) => Task.CompletedTask;
+
+        public Task PrepareResources() => Task.CompletedTask;
 
         public Task WriteResource(WebsiteResource websiteResource, CancellationToken token) => Task.CompletedTask;
     }

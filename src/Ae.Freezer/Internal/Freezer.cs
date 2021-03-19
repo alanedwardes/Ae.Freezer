@@ -34,6 +34,8 @@ namespace Ae.Freezer.Internal
 
             var resourceWriter = freezerConfiguration.ResourceWriter(_serviceProvider);
 
+            await resourceWriter.PrepareResources();
+
             var resources = new ConcurrentDictionary<Uri, WebsiteResource>();
 
             var tasks = new List<Task>
@@ -55,7 +57,7 @@ namespace Ae.Freezer.Internal
                 resource.Value.Dispose();
             }
 
-            await resourceWriter.FlushResources(resources.Select(x => x.Key).ToArray(), token);
+            await resourceWriter.FinishResources(resources.Select(x => x.Key).ToArray(), token);
         }
 
         private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, Uri startUri, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, CancellationToken token)
@@ -77,8 +79,10 @@ namespace Ae.Freezer.Internal
                 return null;
             }
 
+            resource.Status = expectedStatusCode ?? HttpStatusCode.OK;
+
             await httpClient.GetWebsiteResource(resource, freezerConfiguration, token);
-            if (resource.ResponseMessage.StatusCode != (expectedStatusCode ?? HttpStatusCode.OK))
+            if (resource.ResponseMessage.StatusCode != resource.Status)
             {
                 _logger.LogCritical("Resource {RelativeUri} responded with code {StatusCode}", resource.RelativeUri, resource.ResponseMessage.StatusCode);
                 return null;

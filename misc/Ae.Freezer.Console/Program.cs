@@ -1,5 +1,7 @@
 ﻿using Ae.Freezer.Aws;
+using Amazon;
 using Amazon.CloudFront;
+using Amazon.Lambda;
 using Amazon.S3;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,13 +25,18 @@ namespace Ae.Freezer.Console
             crawler.Freeze(new FreezerConfiguration
             {
                 BaseAddress = new Uri("https://uncached.alanedwardes.com"),
-                ResourceWriter = x => new AmazonS3WebsiteResourceWriter(x.GetRequiredService<ILogger<AmazonS3WebsiteResourceWriter>>(), new AmazonS3Client(), new AmazonCloudFrontClient(), new AmazonS3WebsiteResourceWriterConfiguration
+                //ResourceWriter = x => new AmazonS3WebsiteResourceWriter(x.GetRequiredService<ILogger<AmazonS3WebsiteResourceWriter>>(), new AmazonS3Client(), new AmazonCloudFrontClient(), new AmazonS3WebsiteResourceWriterConfiguration
+                //{
+                //    BucketName = "ae-blog-static",
+                //    DistributionId = "E295SAMVLG12SQ",
+                //    ShouldInvalidateCloudFrontCache = true,
+                //    ShouldCleanUnmatchedObjects = true
+                //})
+                ResourceWriter = x => new AmazonLambdaAtEdgeResourceWriter(new AmazonLambdaAtEdgeResourceWriterConfiguration
                 {
-                    BucketName = "ae-blog-static",
-                    DistributionId = "E295SAMVLG12SQ",
-                    ShouldInvalidateCloudFrontCache = true,
-                    ShouldCleanUnmatchedObjects = true
-                })
+                    LambdaName = "AeBlogEdgeResponder",
+                    DistributionId = "E295SAMVLG12SQ"
+                }, new AmazonLambdaClient(RegionEndpoint.USEast1), new AmazonCloudFrontClient())
             }, CancellationToken.None).GetAwaiter().GetResult();
         }
     }

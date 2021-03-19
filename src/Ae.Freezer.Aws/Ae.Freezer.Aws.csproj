@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>0.0.4</Version>
+		<Version>0.0.5</Version>
 		<WarningsAsErrors>true</WarningsAsErrors>
 
 		<Authors>alanedwardes</Authors>
@@ -12,8 +12,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <EmbeddedResource Include="AmazonLambdaAtEdgeResourceLambda.js" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="AWSSDK.CloudFront" Version="3.5.6.14" />
+		<PackageReference Include="AWSSDK.Lambda" Version="3.5.9.1" />
 		<PackageReference Include="AWSSDK.S3" Version="3.5.8.5" />
+		<PackageReference Include="System.Text.Json" Version="5.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

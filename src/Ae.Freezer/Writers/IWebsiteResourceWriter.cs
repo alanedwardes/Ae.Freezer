@@ -8,7 +8,8 @@ namespace Ae.Freezer.Writers
 {
     public interface IWebsiteResourceWriter
     {
+        Task PrepareResources();
         Task WriteResource(WebsiteResource websiteResource, CancellationToken token);
-        Task FlushResources(IReadOnlyCollection<Uri> resources, CancellationToken token);
+        Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token);
     }
 }

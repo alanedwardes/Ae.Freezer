@@ -7,9 +7,7 @@ using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,26 +33,20 @@ namespace Ae.Freezer.Aws
             var putRequest = new PutObjectRequest
             {
                 BucketName = _configuration.BucketName,
-                Key = _configuration.GenerateKey(websiteResource.RelativeUri)
+                Key = _configuration.GenerateKey(websiteResource.RelativeUri),
+                InputStream = await websiteResource.ReadAsStream()
             };
 
             putRequest.Headers.ContentType = websiteResource.ResponseMessage.Content.Headers.ContentType.ToString();
 
             _configuration.PutRequestModifier(putRequest);
 
-            if (websiteResource.ResourceType == WebsiteResourceType.Text)
-            {
-                putRequest.InputStream = new MemoryStream(Encoding.UTF8.GetBytes(websiteResource.TextContent));
-            }
-            else
-            {
-                putRequest.InputStream = await websiteResource.ResponseMessage.Content.ReadAsStreamAsync();
-            }
-
             await _amazons3.PutObjectAsync(putRequest, token);
         }
 
-        public async Task FlushResources(IReadOnlyCollection<Uri> resources, CancellationToken token)
+        public Task PrepareResources() => Task.CompletedTask;
+
+        public async Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token)
         {
             var allWrittenKeys = resources.Select(_configuration.GenerateKey).ToArray();
 
