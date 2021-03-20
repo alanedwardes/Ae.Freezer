@@ -54,19 +54,25 @@ namespace Ae.Freezer.Aws
             _amazonCloudFront = amazonCloudFront;
         }
 
-        public Stream GetLambdaFunctionCode()
+        public static Stream GetLambdaFunctionCode()
         {
-            var assembly = GetType().Assembly;
+            var assembly = typeof(AmazonLambdaAtEdgeResourceWriter).Assembly;
             var assemblyName = assembly.GetName();
             return assembly.GetManifestResourceStream($"{assemblyName.Name}.AmazonLambdaAtEdgeResourceLambda.js");
+        }
+
+        public static Stream CreateZipEntry(ZipArchive archive, string entryName)
+        {
+            var entry = archive.CreateEntry(entryName);
+            entry.ExternalAttributes |= (Convert.ToInt32("755", 8) << 16);
+            return entry.Open();
         }
 
         public async Task PrepareResources()
         {
             _archive = new ZipArchive(_archiveStream, ZipArchiveMode.Create, true);
 
-            var zipEntryBody = _archive.CreateEntry("index.js");
-            using var destination = zipEntryBody.Open();
+            using var destination = CreateZipEntry(_archive, "index.js");
             using var source = GetLambdaFunctionCode();
             await source.CopyToAsync(destination);
         }
@@ -106,9 +112,8 @@ namespace Ae.Freezer.Aws
 
                 var json = JsonSerializer.Serialize(response);
 
-                var zipEntryBody = _archive.CreateEntry($"content/{zipEntryPath}");
-
-                using var writer = new StreamWriter(zipEntryBody.Open());
+                using var zipEntryStream = CreateZipEntry(_archive, $"content/{zipEntryPath}");
+                using var writer = new StreamWriter(zipEntryStream);
                 writer.Write(json);
             }
             finally
