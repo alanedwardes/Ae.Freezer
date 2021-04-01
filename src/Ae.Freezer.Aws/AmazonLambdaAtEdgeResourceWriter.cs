@@ -64,7 +64,7 @@ namespace Ae.Freezer.Aws
         public static Stream CreateZipEntry(ZipArchive archive, string entryName)
         {
             var entry = archive.CreateEntry(entryName);
-            entry.ExternalAttributes |= (Convert.ToInt32("755", 8) << 16);
+            entry.ExternalAttributes |= Convert.ToInt32("755", 8) << 16;
             return entry.Open();
         }
 
@@ -79,7 +79,7 @@ namespace Ae.Freezer.Aws
 
         public async Task WriteResource(WebsiteResource websiteResource, CancellationToken token)
         {
-            var relativeUri = websiteResource.RelativeUri.ToString();
+            var relativeUri = websiteResource.RelativeUri.OriginalString;
             var zipEntryPath = relativeUri.EndsWith("/") || string.IsNullOrWhiteSpace(relativeUri) ? relativeUri + "index" : relativeUri;
 
             await _semaphoreSlim.WaitAsync(token);

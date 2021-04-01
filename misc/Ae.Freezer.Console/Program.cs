@@ -35,7 +35,7 @@ namespace Ae.Freezer.Console
                 ResourceWriter = x => new AmazonLambdaAtEdgeResourceWriter(new AmazonLambdaAtEdgeResourceWriterConfiguration
                 {
                     LambdaName = "AeBlogEdgeResponder",
-                    DistributionId = "E295SAMVLG12SQ"
+                    DistributionId = "EEA31G52A1G7T"
                 }, new AmazonLambdaClient(RegionEndpoint.USEast1), new AmazonCloudFrontClient())
             }, CancellationToken.None).GetAwaiter().GetResult();
         }
