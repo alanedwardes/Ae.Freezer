@@ -2,8 +2,9 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>0.0.8</Version>
-		<WarningsAsErrors>true</WarningsAsErrors>
+		<Version>0.0.9</Version>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 
 		<Authors>alanedwardes</Authors>
 		<Description>A C# library to crawl a dynamic website and turn it into static content, servable via Amazon S3 with optional CloudFront invalidation.</Description>

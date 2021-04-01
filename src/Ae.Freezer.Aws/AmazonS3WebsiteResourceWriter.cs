@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace Ae.Freezer.Aws
 {
+    /// <summary>
+    /// Describes a <see cref="IWebsiteResourceWriter"/> implementation which writes <see cref="WebsiteResource"/> objects to Amazon S3 using the correct paths.
+    /// </summary>
     public sealed class AmazonS3WebsiteResourceWriter : IWebsiteResourceWriter
     {
         private readonly ILogger<AmazonS3WebsiteResourceWriter> _logger;
@@ -20,7 +23,14 @@ namespace Ae.Freezer.Aws
         private readonly IAmazonCloudFront _amazonCloudFront;
         private readonly AmazonS3WebsiteResourceWriterConfiguration _configuration;
 
-        public AmazonS3WebsiteResourceWriter(ILogger<AmazonS3WebsiteResourceWriter> logger, IAmazonS3 amazons3, IAmazonCloudFront amazonCloudFront, AmazonS3WebsiteResourceWriterConfiguration configuration)
+        /// <summary>
+        /// Construct a new <see cref="AmazonS3WebsiteResourceWriter"/> using the specified <see cref="IAmazonS3"/> client, <see cref="IAmazonCloudFront"/> client and <see cref="AmazonS3WebsiteResourceWriterConfiguration"/> object.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="configuration"></param>
+        /// <param name="amazons3"></param>
+        /// <param name="amazonCloudFront"></param>
+        public AmazonS3WebsiteResourceWriter(ILogger<AmazonS3WebsiteResourceWriter> logger, AmazonS3WebsiteResourceWriterConfiguration configuration, IAmazonS3 amazons3, IAmazonCloudFront amazonCloudFront)
         {
             _logger = logger;
             _amazons3 = amazons3;
@@ -28,6 +38,7 @@ namespace Ae.Freezer.Aws
             _configuration = configuration;
         }
 
+        /// <inheritdoc/>
         public async Task WriteResource(WebsiteResource websiteResource, CancellationToken token)
         {
             var putRequest = new PutObjectRequest
@@ -44,8 +55,10 @@ namespace Ae.Freezer.Aws
             await _amazons3.PutObjectAsync(putRequest, token);
         }
 
+        /// <inheritdoc/>
         public Task PrepareResources() => Task.CompletedTask;
 
+        /// <inheritdoc/>
         public async Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token)
         {
             var allWrittenKeys = resources.Select(_configuration.GenerateKey).ToArray();
@@ -64,7 +77,7 @@ namespace Ae.Freezer.Aws
                 }
             }
 
-            if (_configuration.ShouldInvalidateCloudFrontCache)
+            if (_configuration.DistributionId != null)
             {
                 var invalidationRequest = new CreateInvalidationRequest
                 {

@@ -1,4 +1,5 @@
-﻿using Ae.Freezer.Entities;
+﻿using Ae.Freezer.Aws.Internal;
+using Ae.Freezer.Entities;
 using Ae.Freezer.Writers;
 using Amazon.CloudFront;
 using Amazon.CloudFront.Model;
@@ -10,34 +11,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ae.Freezer.Aws
 {
-    internal sealed class AmazonLambdaAtEdgeResponse
-    {
-        internal sealed class Header
-        {
-            [JsonPropertyName("key")]
-            public string Key { get; set; }
-            [JsonPropertyName("value")]
-            public string Value { get; set; }
-        }
-
-        [JsonPropertyName("status")]
-        public uint Status { get; set; }
-        [JsonPropertyName("statusDescription")]
-        public string StatusDescription { get; set; }
-        [JsonPropertyName("headers")]
-        public IDictionary<string, IList<Header>> Headers { get; set; } = new Dictionary<string, IList<Header>>();
-        [JsonPropertyName("body")]
-        public string Body { get; set; }
-        [JsonPropertyName("bodyEncoding")]
-        public string BodyEncoding { get; set; }
-    }
-
+    /// <summary>
+    /// Describes a <see cref="IWebsiteResourceWriter"/> implementation which writes a Node.JS Lambda@Edge function and publishes it to a CloudFront distribution containing all <see cref="WebsiteResource"/> instances.
+    /// </summary>
     public sealed class AmazonLambdaAtEdgeResourceWriter : IWebsiteResourceWriter
     {
         private ZipArchive _archive;
@@ -47,6 +28,12 @@ namespace Ae.Freezer.Aws
         private readonly IAmazonLambda _amazonLambda;
         private readonly IAmazonCloudFront _amazonCloudFront;
 
+        /// <summary>
+        /// Construct a new <see cref="AmazonLambdaAtEdgeResourceWriter"/> using the specified <see cref="AmazonLambdaAtEdgeResourceWriterConfiguration"/>, <see cref="IAmazonLambda"/> client and <see cref="IAmazonCloudFront"/> client.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="amazonLambda"></param>
+        /// <param name="amazonCloudFront"></param>
         public AmazonLambdaAtEdgeResourceWriter(AmazonLambdaAtEdgeResourceWriterConfiguration configuration, IAmazonLambda amazonLambda, IAmazonCloudFront amazonCloudFront)
         {
             _configuration = configuration;
@@ -54,20 +41,21 @@ namespace Ae.Freezer.Aws
             _amazonCloudFront = amazonCloudFront;
         }
 
-        public static Stream GetLambdaFunctionCode()
+        private static Stream GetLambdaFunctionCode()
         {
             var assembly = typeof(AmazonLambdaAtEdgeResourceWriter).Assembly;
             var assemblyName = assembly.GetName();
             return assembly.GetManifestResourceStream($"{assemblyName.Name}.AmazonLambdaAtEdgeResourceLambda.js");
         }
 
-        public static Stream CreateZipEntry(ZipArchive archive, string entryName)
+        private static Stream CreateZipEntry(ZipArchive archive, string entryName)
         {
             var entry = archive.CreateEntry(entryName);
             entry.ExternalAttributes |= Convert.ToInt32("755", 8) << 16;
             return entry.Open();
         }
 
+        /// <inheritdoc/>
         public async Task PrepareResources()
         {
             _archive = new ZipArchive(_archiveStream, ZipArchiveMode.Create, true);
@@ -77,6 +65,7 @@ namespace Ae.Freezer.Aws
             await source.CopyToAsync(destination);
         }
 
+        /// <inheritdoc/>
         public async Task WriteResource(WebsiteResource websiteResource, CancellationToken token)
         {
             var relativeUri = websiteResource.RelativeUri.OriginalString;
@@ -123,6 +112,7 @@ namespace Ae.Freezer.Aws
 
         }
 
+        /// <inheritdoc/>
         public async Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token)
         {
             _archive.Dispose();

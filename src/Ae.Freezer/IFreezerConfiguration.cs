@@ -5,14 +5,38 @@ using System.Text.RegularExpressions;
 
 namespace Ae.Freezer
 {
+    /// <summary>
+    /// Describes configuration to use with a <see cref="IFreezer"/> instance.
+    /// </summary>
     public interface IFreezerConfiguration
     {
+        /// <summary>
+        /// The root address of the website to crawl.
+        /// </summary>
         Uri BaseAddress { get; }
+        /// <summary>
+        /// The path to start at, defaults to "/"
+        /// </summary>
         Uri StartPath { get; }
+        /// <summary>
+        /// The regex to use to figure out links from the HTML content.
+        /// </summary>
         Regex ResourceRegex { get; }
+        /// <summary>
+        /// The mime types of content to be treated as text.
+        /// </summary>
         ISet<string> TextMimeTypes { get; }
+        /// <summary>
+        /// The instance of <see cref="IWebsiteResourceWriter"/> to use to "freeze" the found resources.
+        /// </summary>
         Func<IServiceProvider, IWebsiteResourceWriter> ResourceWriter { get; }
+        /// <summary>
+        /// A set of additional relative URIs of resources to add into the crawl.
+        /// </summary>
         ISet<Uri> AdditionalResources { get; }
+        /// <summary>
+        /// The URI of the "not found" page to use. Defaults to "errors/404".
+        /// </summary>
         Uri NotFoundPage { get; set; }
     }
 }
