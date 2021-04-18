@@ -10,7 +10,7 @@ namespace Ae.Freezer
     public sealed class FreezerConfiguration : IFreezerConfiguration
     {
         /// <inheritdoc/>
-        public Uri BaseAddress { get; set; }
+        public string HttpClientName { get; set; } = string.Empty;
         /// <inheritdoc/>
         public Uri StartPath { get; set; } = new Uri(string.Empty, UriKind.Relative);
         /// <inheritdoc/>

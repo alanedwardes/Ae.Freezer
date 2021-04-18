@@ -29,8 +29,7 @@ namespace Ae.Freezer.Internal
 
         public async Task Freeze(IFreezerConfiguration freezerConfiguration, CancellationToken token)
         {
-            using var httpClient = _httpClientFactory.CreateClient();
-            httpClient.BaseAddress = freezerConfiguration.BaseAddress;
+            using var httpClient = _httpClientFactory.CreateClient(freezerConfiguration.HttpClientName);
 
             var resourceWriter = freezerConfiguration.ResourceWriter(_serviceProvider);
 
@@ -68,7 +67,7 @@ namespace Ae.Freezer.Internal
                 return;
             }
 
-            await Task.WhenAll(_linkFinder.GetUrisFromLinks(freezerConfiguration.BaseAddress, startResource.TextContent).Select(uri => FindResourcesRecursive(httpClient, resourceWriter, uri, freezerConfiguration, resources, token)));
+            await Task.WhenAll(_linkFinder.GetUrisFromLinks(httpClient.BaseAddress, startResource.TextContent).Select(uri => FindResourcesRecursive(httpClient, resourceWriter, uri, freezerConfiguration, resources, token)));
         }
 
         private async Task<WebsiteResource> GetWebsiteResource(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, IDictionary<Uri, WebsiteResource> resources, Uri uri, IFreezerConfiguration freezerConfiguration, HttpStatusCode? expectedStatusCode, CancellationToken token)

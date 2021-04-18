@@ -1,6 +1,7 @@
 ﻿using Ae.Freezer.Writers;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace Ae.Freezer
@@ -11,9 +12,9 @@ namespace Ae.Freezer
     public interface IFreezerConfiguration
     {
         /// <summary>
-        /// The root address of the website to crawl.
+        /// The name of the <see cref="HttpClient"/> to retreive from the <see cref="IHttpClientFactory"/>.
         /// </summary>
-        Uri BaseAddress { get; }
+        string HttpClientName { get; }
         /// <summary>
         /// The path to start at, defaults to "/"
         /// </summary>
