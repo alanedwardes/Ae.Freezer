@@ -24,7 +24,11 @@ namespace Ae.Freezer.Aws
         /// <summary>
         /// Required: The function to use to generate the Amazon S3 object keys from the relative URIs.
         /// </summary>
-        public Func<Uri, string> GenerateKey { get; set; } = relativeUri => relativeUri.ToString() == string.Empty ? "index.html" : relativeUri.ToString();
+        public Func<Uri, string> GenerateKey { get; set; } = relativeUri =>
+        {
+            var relativeUriString = relativeUri.ToString().TrimStart('/');
+            return relativeUriString == string.Empty ? "index.html" : relativeUriString;
+        };
         /// <summary>
         /// Required: The function to use to determine the <see cref="S3CannedACL"/> to use when writing the website resources.
         /// </summary>

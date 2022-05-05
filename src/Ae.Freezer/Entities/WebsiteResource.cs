@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ae.Freezer.Internal;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -13,18 +14,17 @@ namespace Ae.Freezer.Entities
     public sealed class WebsiteResource : IDisposable
     {
         /// <summary>
-        /// Construct a new <see cref="WebsiteResource"/> using the specified relative <see cref="Uri"/>.
+        /// Construct a new <see cref="WebsiteResource"/> using the specified relative <see cref="FoundUri"/>.
         /// </summary>
-        /// <param name="relativeUri"></param>
-        public WebsiteResource(Uri relativeUri) => RelativeUri = relativeUri;
+        public WebsiteResource(FoundUri uri) => FoundUri = uri;
         /// <summary>
         /// The type of website resource this instance represents.
         /// </summary>
         public WebsiteResourceType ResourceType { get; set; }
         /// <summary>
-        /// The relative URI of this resource.
+        /// The original URI string as it appeared in the page.
         /// </summary>
-        public Uri RelativeUri { get; }
+        public FoundUri FoundUri { get; set; }
         /// <summary>
         /// If the <see cref="ResourceType"/> is <see cref="WebsiteResourceType.Text"/>, the content of this website resource.
         /// </summary>

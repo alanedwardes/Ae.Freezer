@@ -44,7 +44,7 @@ namespace Ae.Freezer.Aws
             var putRequest = new PutObjectRequest
             {
                 BucketName = _configuration.BucketName,
-                Key = _configuration.GenerateKey(websiteResource.RelativeUri),
+                Key = _configuration.GenerateKey(websiteResource.FoundUri.Uri),
                 InputStream = await websiteResource.ReadAsStream()
             };
 

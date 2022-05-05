@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Ae.Freezer.Internal
 {
     internal sealed class LinkFinder : ILinkFinder
     {
-        private static readonly Regex URI_REGEX = new Regex("(href|src)=\"(?<uri>.+?)\"");
+        private static readonly Regex URI_REGEX = new Regex("(?<attribute>(href|src))=\"(?<uri>.+?)\"");
         private readonly ILogger<LinkFinder> _logger;
 
         public LinkFinder(ILogger<LinkFinder> logger)
@@ -16,13 +16,13 @@ namespace Ae.Freezer.Internal
             _logger = logger;
         }
 
-        public ISet<Uri> GetUrisFromLinks(Uri baseAddress, string body)
+        public IEnumerable<FoundUri> GetUrisFromLinks(Uri baseAddress, string body)
         {
-            var uris = new HashSet<Uri>();
-
-            foreach (Group group in URI_REGEX.Matches(body).Select(x => x.Groups["uri"]))
+            foreach (Match foundUri in URI_REGEX.Matches(body))
             {
-                if (!Uri.TryCreate(group.Value, UriKind.RelativeOrAbsolute, out Uri uri))
+                var attribute = foundUri.Groups["attribute"].Value;
+                var rawUri = foundUri.Groups["uri"].Value;
+                if (!Uri.TryCreate(WebUtility.HtmlDecode(rawUri), UriKind.RelativeOrAbsolute, out Uri uri))
                 {
                     _logger.LogWarning("The following URI is invalid: {InvalidUri}", uri);
                     continue;
@@ -34,10 +34,15 @@ namespace Ae.Freezer.Internal
                     continue;
                 }
 
-                uris.Add(baseAddress.MakeRelativeUri(absoluteUri));
-            }
+                var relativeUri = "/" + absoluteUri.AbsoluteUri[baseAddress.AbsoluteUri.Length..];
 
-            return uris;
+                yield return new FoundUri
+                {
+                    AttributeName = attribute,
+                    AttributeValue = rawUri,
+                    Uri = new Uri(relativeUri, UriKind.Relative)
+                };
+            }
         }
 
         public Uri GetValidAbsoluteUri(Uri baseAddress, Uri uri)

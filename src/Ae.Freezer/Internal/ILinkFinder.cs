@@ -5,6 +5,6 @@ namespace Ae.Freezer.Internal
 {
     internal interface ILinkFinder
     {
-        ISet<Uri> GetUrisFromLinks(Uri baseAddress, string body);
+        IEnumerable<FoundUri> GetUrisFromLinks(Uri baseAddress, string body);
     }
 }

@@ -68,7 +68,7 @@ namespace Ae.Freezer.Aws
         /// <inheritdoc/>
         public async Task WriteResource(WebsiteResource websiteResource, CancellationToken token)
         {
-            var relativeUri = websiteResource.RelativeUri.OriginalString;
+            var relativeUri = websiteResource.FoundUri.Uri.OriginalString;
             var zipEntryPath = relativeUri.EndsWith("/") || string.IsNullOrWhiteSpace(relativeUri) ? relativeUri + "index" : relativeUri;
 
             await _semaphoreSlim.WaitAsync(token);
@@ -169,6 +169,11 @@ namespace Ae.Freezer.Aws
             }
 
             return functionAssociation;
+        }
+
+        /// <inheritdoc/>
+        public void ProcessResource(WebsiteResource websiteResource)
+        {
         }
     }
 }
