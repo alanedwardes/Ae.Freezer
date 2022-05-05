@@ -1,4 +1,9 @@
-﻿using Ae.Freezer.Writers;
+﻿using Ae.Freezer.Aws;
+using Ae.Freezer.Writers;
+using Amazon;
+using Amazon.CloudFront;
+using Amazon.IdentityManagement;
+using Amazon.Lambda;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -28,12 +33,12 @@ namespace Ae.Freezer.Console
                 //    ShouldInvalidateCloudFrontCache = true,
                 //    ShouldCleanUnmatchedObjects = true
                 //})
-                //ResourceWriter = x => new AmazonLambdaAtEdgeResourceWriter(new AmazonLambdaAtEdgeResourceWriterConfiguration
-                //{
-                //    LambdaName = "AeBlogEdgeResponder",
-                //    DistributionId = "EEA31G52A1G7T"
-                //}, new AmazonLambdaClient(RegionEndpoint.USEast1), new AmazonCloudFrontClient())
-                ResourceWriter = x => new NullWebsiteResourceWriter()
+                ResourceWriter = x => new AmazonLambdaAtEdgeResourceWriter(x.GetRequiredService<ILogger<AmazonLambdaAtEdgeResourceWriter>>(), new AmazonLambdaAtEdgeResourceWriterConfiguration
+                {
+                    LambdaName = "TestEdgeResponder2",
+                    DistributionId = "E2PUGLR3DO3SIG"
+                }, new AmazonLambdaClient(RegionEndpoint.USEast1), new AmazonCloudFrontClient(), new AmazonIdentityManagementServiceClient())
+                //ResourceWriter = x => new NullWebsiteResourceWriter()
             }, CancellationToken.None).GetAwaiter().GetResult();
         }
     }

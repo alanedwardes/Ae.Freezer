@@ -3,8 +3,11 @@ using Ae.Freezer.Entities;
 using Ae.Freezer.Writers;
 using Amazon.CloudFront;
 using Amazon.CloudFront.Model;
+using Amazon.IdentityManagement;
+using Amazon.IdentityManagement.Model;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,21 +27,27 @@ namespace Ae.Freezer.Aws
         private ZipArchive _archive;
         private readonly MemoryStream _archiveStream = new MemoryStream();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+        private readonly ILogger<AmazonLambdaAtEdgeResourceWriter> _logger;
         private readonly AmazonLambdaAtEdgeResourceWriterConfiguration _configuration;
         private readonly IAmazonLambda _amazonLambda;
         private readonly IAmazonCloudFront _amazonCloudFront;
+        private readonly IAmazonIdentityManagementService _identityManagementService;
 
         /// <summary>
         /// Construct a new <see cref="AmazonLambdaAtEdgeResourceWriter"/> using the specified <see cref="AmazonLambdaAtEdgeResourceWriterConfiguration"/>, <see cref="IAmazonLambda"/> client and <see cref="IAmazonCloudFront"/> client.
         /// </summary>
+        /// <param name="logger"></param>
         /// <param name="configuration"></param>
         /// <param name="amazonLambda"></param>
         /// <param name="amazonCloudFront"></param>
-        public AmazonLambdaAtEdgeResourceWriter(AmazonLambdaAtEdgeResourceWriterConfiguration configuration, IAmazonLambda amazonLambda, IAmazonCloudFront amazonCloudFront)
+        /// <param name="identityManagementService"></param>
+        public AmazonLambdaAtEdgeResourceWriter(ILogger<AmazonLambdaAtEdgeResourceWriter> logger, AmazonLambdaAtEdgeResourceWriterConfiguration configuration, IAmazonLambda amazonLambda, IAmazonCloudFront amazonCloudFront, IAmazonIdentityManagementService identityManagementService)
         {
+            _logger = logger;
             _configuration = configuration;
             _amazonLambda = amazonLambda;
             _amazonCloudFront = amazonCloudFront;
+            _identityManagementService = identityManagementService;
         }
 
         private static Stream GetLambdaFunctionCode()
@@ -109,7 +118,6 @@ namespace Ae.Freezer.Aws
             {
                 _semaphoreSlim.Release();
             }
-
         }
 
         /// <inheritdoc/>
@@ -118,13 +126,7 @@ namespace Ae.Freezer.Aws
             _archive.Dispose();
             _archiveStream.Position = 0;
 
-            // Update the Lambda@Edge function and deploy a new version
-            var update = await _amazonLambda.UpdateFunctionCodeAsync(new UpdateFunctionCodeRequest
-            {
-                ZipFile = _archiveStream,
-                FunctionName = _configuration.LambdaName,
-                Publish = true
-            });
+            string functionArn = await CreateOrUpdateFunctionResource();
 
             // Get the current config of the distribution
             var distributionConfig = await _amazonCloudFront.GetDistributionConfigAsync(new GetDistributionConfigRequest(_configuration.DistributionId), token);
@@ -133,7 +135,7 @@ namespace Ae.Freezer.Aws
             LambdaFunctionAssociation functionAssociation = GetLambdaFunctionAssociation(distributionConfig.DistributionConfig);
 
             // Update its ARN to the newly published version
-            functionAssociation.LambdaFunctionARN = update.FunctionArn;
+            functionAssociation.LambdaFunctionARN = functionArn;
 
             // Update the config of the distribution
             await _amazonCloudFront.UpdateDistributionAsync(new UpdateDistributionRequest
@@ -144,12 +146,78 @@ namespace Ae.Freezer.Aws
             });
         }
 
+        private async Task<string> CreateOrUpdateLambdaRole()
+        {
+            try
+            {
+                return (await _identityManagementService.CreateRoleAsync(new CreateRoleRequest
+                {
+                    RoleName = _configuration.LambdaName,
+                    AssumeRolePolicyDocument = @"{""Version"":""2012-10-17"",""Statement"":[" +
+                        @"{""Effect"":""Allow"",""Principal"":{""Service"":""lambda.amazonaws.com""},""Action"":""sts:AssumeRole""}," +
+                        @"{""Effect"": ""Allow"",""Principal"":{""Service"":""edgelambda.amazonaws.com""},""Action"":""sts:AssumeRole""}" +
+                        "]}"
+                })).Role.Arn;
+            }
+            catch (EntityAlreadyExistsException)
+            {
+                return (await _identityManagementService.GetRoleAsync(new GetRoleRequest { RoleName = _configuration.LambdaName })).Role.Arn;
+            }
+        }
+
+        private async Task<string> CreateOrUpdateFunctionResource()
+        {
+            // Update the Lambda@Edge function and deploy a new version
+            string functionArn;
+
+            try
+            {
+                _logger.LogInformation("Attempting to update Lambda function {FunctionName}", _configuration.LambdaName);
+
+                functionArn = (await _amazonLambda.UpdateFunctionCodeAsync(new UpdateFunctionCodeRequest
+                {
+                    ZipFile = _archiveStream,
+                    FunctionName = _configuration.LambdaName,
+                    Publish = true
+                })).FunctionArn;
+            }
+            catch (ResourceNotFoundException)
+            {
+                _logger.LogInformation("Lambda function {FunctionName} does not exist, creating", _configuration.LambdaName);
+
+                functionArn = (await _amazonLambda.CreateFunctionAsync(new Amazon.Lambda.Model.CreateFunctionRequest
+                {
+                    Code = new FunctionCode { ZipFile = _archiveStream },
+                    FunctionName = _configuration.LambdaName,
+                    Publish = true,
+                    Handler = "index.handler",
+                    Runtime = Runtime.Nodejs12X,
+                    Architectures = new List<string> { "x86_64" },
+                    MemorySize = 128,
+                    Timeout = 3,
+                    PackageType = PackageType.Zip,
+                    Role = await CreateOrUpdateLambdaRole()
+                })).FunctionArn + ":1";
+            }
+
+            FunctionConfiguration functionConfiguration;
+            do
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                functionConfiguration = (await _amazonLambda.GetFunctionAsync(functionArn)).Configuration;
+                _logger.LogInformation("Lambda function {FunctionName} has state {State}", functionArn, functionConfiguration.State);
+            }
+            while (functionConfiguration.State == State.Pending);
+
+            return functionArn;
+        }
+
         private LambdaFunctionAssociation GetLambdaFunctionAssociation(DistributionConfig distributionConfig)
         {
-            IList<LambdaFunctionAssociation> functionAssociations;
+            LambdaFunctionAssociations functionAssociations;
             if (_configuration.CacheBehaviourId == null)
             {
-                functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations.Items;
+                functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
             }
             else
             {
@@ -159,13 +227,15 @@ namespace Ae.Freezer.Aws
                     throw new InvalidOperationException($"Unable to find cache behaviour with ID {_configuration.CacheBehaviourId}");
                 }
 
-                functionAssociations = cacheBehavior.LambdaFunctionAssociations.Items;
+                functionAssociations = cacheBehavior.LambdaFunctionAssociations;
             }
 
-            var functionAssociation = functionAssociations.SingleOrDefault(x => x.EventType == _configuration.LambdaEventType);
+            var functionAssociation = functionAssociations.Items.SingleOrDefault(x => x.EventType == _configuration.LambdaEventType);
             if (functionAssociation == null)
             {
-                throw new InvalidOperationException($"Unable to find existing Lambda function associated with event type {_configuration.LambdaEventType}");
+                functionAssociation = new LambdaFunctionAssociation { EventType = EventType.OriginRequest };
+                functionAssociations.Items.Add(functionAssociation);
+                functionAssociations.Quantity++;
             }
 
             return functionAssociation;
