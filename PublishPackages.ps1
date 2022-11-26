@@ -1,4 +1,5 @@
-﻿$ErrorActionPreference = "Stop"
+﻿
+$ErrorActionPreference = "Stop"
 
 Remove-Item src/*/bin/Release/*.nupkg
 
@@ -24,9 +25,7 @@ Foreach ($SourceProject in Get-ChildItem src/*/*.csproj)
     }
 }
 
-$ApiKeySecure = Read-Host "Enter NuGet API key" -AsSecureString
-
-$ApiKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($ApiKeySecure))
+$ApiKey = Read-Host "Enter NuGet API key"
 
 Foreach ($Package in Get-ChildItem src/*/bin/Release/*.nupkg)
 {
