@@ -191,7 +191,7 @@ namespace Ae.Freezer.Aws
                     FunctionName = _configuration.LambdaName,
                     Publish = true,
                     Handler = "index.handler",
-                    Runtime = Runtime.Nodejs12X,
+                    Runtime = Runtime.Nodejs18X,
                     Architectures = new List<string> { "x86_64" },
                     MemorySize = 128,
                     Timeout = 3,
