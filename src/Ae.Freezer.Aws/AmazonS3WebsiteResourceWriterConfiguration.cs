@@ -25,7 +25,7 @@ namespace Ae.Freezer.Aws
         /// By default, convert empty string (e.g. the root document) to "index.html" and use
         /// the relative URL as the object key verbatim (<see cref="DefaultKeyGenerator"/>).
         /// </summary>
-        public Func<Uri, string> GenerateKey { get; set; }
+        public Func<Uri, string> GenerateKey { get; set; } = DefaultKeyGenerator;
         /// <summary>
         /// If non-null, the function to use to modify the PUT object request. For example, to customize the <see cref="PutObjectRequest.CannedACL"/> property.
         /// </summary>
