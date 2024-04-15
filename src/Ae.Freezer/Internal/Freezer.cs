@@ -67,7 +67,7 @@ namespace Ae.Freezer.Internal
                 return;
             }
 
-            await Task.WhenAll(_linkFinder.GetUrisFromLinks(httpClient.BaseAddress, startResource.TextContent).Select(uri => FindResourcesRecursive(httpClient, resourceWriter, uri, freezerConfiguration, resources, token)));
+            await Task.WhenAll(_linkFinder.GetUrisFromLinks(httpClient.BaseAddress, startResource.TextContent, freezerConfiguration).Select(uri => FindResourcesRecursive(httpClient, resourceWriter, uri, freezerConfiguration, resources, token)));
         }
 
         private async Task<WebsiteResource> GetWebsiteResource(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, IDictionary<Uri, WebsiteResource> resources, Uri uri, IFreezerConfiguration freezerConfiguration, HttpStatusCode? expectedStatusCode, CancellationToken token)

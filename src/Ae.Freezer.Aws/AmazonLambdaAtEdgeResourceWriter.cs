@@ -159,7 +159,7 @@ namespace Ae.Freezer.Aws
                         "]}"
                 })).Role.Arn;
             }
-            catch (EntityAlreadyExistsException)
+            catch (Amazon.IdentityManagement.Model.EntityAlreadyExistsException)
             {
                 return (await _identityManagementService.GetRoleAsync(new GetRoleRequest { RoleName = _configuration.LambdaName })).Role.Arn;
             }

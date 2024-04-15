@@ -23,5 +23,7 @@ namespace Ae.Freezer
         public ISet<Uri> AdditionalResources { get; set; } = new HashSet<Uri> { new Uri("favicon.ico", UriKind.Relative), new Uri("robots.txt", UriKind.Relative) };
         /// <inheritdoc/>
         public Uri NotFoundPage { get; set; } = new Uri("errors/404", UriKind.Relative);
+        /// <inheritdoc/>
+        public bool AllowQueryString { get; set; }
     }
 }

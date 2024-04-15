@@ -12,16 +12,27 @@ namespace Ae.Freezer.Tests
                                          "<a href=\"https://www.example.com/test2\">test2</a>" +
                                          "<a href=\"/test3\">test3</a>" +
                                          "<a href=\"https://www.example.org/test4\">test4</a>" +
-                                         "<a href=\"https://www.example.com/test5#test\">test5</a>";
+                                         "<a href=\"https://www.example.com/test5#test\">test5</a>" +
+                                         "<a href=\"https://www.example.com/test5?test=wibble\">test6</a>";
 
         [Fact]
-        public void FindLinksDocument1()
+        public void FindLinksIgnoreQueryStringAndFragment()
         {
             ILinkFinder linkFinder = new LinkFinder(new NullLogger<LinkFinder>());
 
-            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), Document1);
+            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), Document1, new FreezerConfiguration());
 
             Assert.True(links.SetEquals(new[] { "test1", "test2", "test3", "test5" }.Select(x => new Uri(x, UriKind.Relative))));
+        }
+
+        [Fact]
+        public void FindLinksAllowQueryString()
+        {
+            ILinkFinder linkFinder = new LinkFinder(new NullLogger<LinkFinder>());
+
+            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), Document1, new FreezerConfiguration { AllowQueryString = true });
+
+            Assert.True(links.SetEquals(new[] { "test1", "test2", "test3", "test5", "test5?test=wibble" }.Select(x => new Uri(x, UriKind.Relative))));
         }
     }
 }

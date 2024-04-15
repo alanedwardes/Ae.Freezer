@@ -38,6 +38,11 @@ namespace Ae.Freezer
         /// <summary>
         /// The URI of the "not found" page to use. Defaults to "errors/404".
         /// </summary>
-        Uri NotFoundPage { get; set; }
+        Uri NotFoundPage { get; }
+        /// <summary>
+        /// If true, don't strip query strings from found URIs. Disallowed by default since
+        /// storage providers like Amazon S3 don't work well with the ? and &amp; characters.
+        /// </summary>
+        public bool AllowQueryString { get; }
     }
 }

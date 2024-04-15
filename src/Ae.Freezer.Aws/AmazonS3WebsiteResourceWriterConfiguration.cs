@@ -1,5 +1,4 @@
-﻿using Amazon.S3;
-using Amazon.S3.Model;
+﻿using Amazon.S3.Model;
 using System;
 
 namespace Ae.Freezer.Aws
@@ -10,24 +9,33 @@ namespace Ae.Freezer.Aws
     public sealed class AmazonS3WebsiteResourceWriterConfiguration
     {
         /// <summary>
-        /// Required: The Amazon S3 bucket name to use.
+        /// The Amazon S3 bucket name to use (must be set).
         /// </summary>
         public string BucketName { get; set; }
         /// <summary>
-        /// Optional: Whether to remove all objects from the bucket which do not match the static website resources written in this session.
+        /// Whether to remove all objects from the bucket which do not match the static website resources written in this session.
         /// </summary>
         public bool ShouldCleanUnmatchedObjects { get; set; }
         /// <summary>
-        /// Optional: The CloudFront distribution to invalidate once the objects are pushed.
+        /// If non-null, the CloudFront distribution to invalidate once the objects are pushed.
         /// </summary>
         public string DistributionId { get; set; }
         /// <summary>
-        /// Required: The function to use to generate the Amazon S3 object keys from the relative URIs.
+        /// The function to use to generate the Amazon S3 object keys from the relative URIs.
+        /// By default, convert empty string (e.g. the root document) to "index.html" and use
+        /// the relative URL as the object key verbatim (<see cref="DefaultKeyGenerator"/>).
         /// </summary>
-        public Func<Uri, string> GenerateKey { get; set; } = relativeUri => relativeUri.ToString() == string.Empty ? "index.html" : relativeUri.ToString();
+        public Func<Uri, string> GenerateKey { get; set; }
         /// <summary>
-        /// Required: The function to use to determine the <see cref="S3CannedACL"/> to use when writing the website resources.
+        /// If non-null, the function to use to modify the PUT object request. For example, to customize the <see cref="PutObjectRequest.CannedACL"/> property.
         /// </summary>
-        public Action<PutObjectRequest> PutRequestModifier { get; set; } = x => x.CannedACL = S3CannedACL.PublicRead;
+        public Action<PutObjectRequest> PutRequestModifier { get; set; }
+        /// <summary>
+        /// The default S3 key generator function.
+        /// </summary>
+        public static readonly Func<Uri, string> DefaultKeyGenerator = relativeUri =>
+        {
+            return relativeUri.ToString() == string.Empty ? "index.html" : relativeUri.ToString();
+        };
     }
 }

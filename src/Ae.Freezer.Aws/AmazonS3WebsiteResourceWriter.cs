@@ -50,7 +50,7 @@ namespace Ae.Freezer.Aws
 
             putRequest.Headers.ContentType = websiteResource.ResponseMessage.Content.Headers.ContentType.ToString();
 
-            _configuration.PutRequestModifier(putRequest);
+            _configuration?.PutRequestModifier(putRequest);
 
             await _amazons3.PutObjectAsync(putRequest, token);
         }

@@ -6,19 +6,19 @@
     public sealed class AmazonLambdaAtEdgeResourceWriterConfiguration
     {
         /// <summary>
-        /// Required: The name of an existing Lambda function to replace and publish a new version.
+        /// The name of an existing Lambda function to replace and publish a new version.
         /// </summary>
         public string LambdaName { get; set; }
         /// <summary>
-        /// Required: The ID of the CloudFront distribution to update with the new Lambda function version.
+        /// The ID of the CloudFront distribution to update with the new Lambda function version.
         /// </summary>
         public string DistributionId { get; set; }
         /// <summary>
-        /// Optional: The cache behaviour to update, if not set will use the default behaviour.
+        /// If non-null, the cache behaviour to update, if not set will use the default behaviour.
         /// </summary>
         public string CacheBehaviourId { get; set; }
         /// <summary>
-        /// Required: The CloudFront event type to use when finding the existing Lambda@Edge function association. Defaults to <see cref="Amazon.CloudFront.EventType.OriginRequest"/>.
+        /// The CloudFront event type to use when finding the existing Lambda@Edge function association. Defaults to <see cref="Amazon.CloudFront.EventType.OriginRequest"/>.
         /// </summary>
         public Amazon.CloudFront.EventType LambdaEventType { get; set; } = Amazon.CloudFront.EventType.OriginRequest;
     }

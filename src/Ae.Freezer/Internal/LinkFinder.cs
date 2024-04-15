@@ -16,7 +16,7 @@ namespace Ae.Freezer.Internal
             _logger = logger;
         }
 
-        public ISet<Uri> GetUrisFromLinks(Uri baseAddress, string body)
+        public ISet<Uri> GetUrisFromLinks(Uri baseAddress, string body, IFreezerConfiguration freezerConfiguration)
         {
             var uris = new HashSet<Uri>();
 
@@ -28,7 +28,7 @@ namespace Ae.Freezer.Internal
                     continue;
                 }
 
-                var absoluteUri = GetValidAbsoluteUri(baseAddress, uri);
+                var absoluteUri = GetValidAbsoluteUri(baseAddress, uri, freezerConfiguration);
                 if (absoluteUri == null)
                 {
                     continue;
@@ -40,7 +40,7 @@ namespace Ae.Freezer.Internal
             return uris;
         }
 
-        public Uri GetValidAbsoluteUri(Uri baseAddress, Uri uri)
+        private Uri GetValidAbsoluteUri(Uri baseAddress, Uri uri, IFreezerConfiguration freezerConfiguration)
         {
             Uri absoluteUri = GetAbsoluteUri(baseAddress, uri);
             if (absoluteUri == null)
@@ -55,10 +55,10 @@ namespace Ae.Freezer.Internal
                 return null;
             }
 
-            return GetUriWithoutFragment(absoluteUri);
+            return GetUriWithoutFragment(absoluteUri, freezerConfiguration);
         }
 
-        public Uri GetAbsoluteUri(Uri baseAddress, Uri uri)
+        private Uri GetAbsoluteUri(Uri baseAddress, Uri uri)
         {
             if (uri.IsAbsoluteUri)
             {
@@ -72,6 +72,21 @@ namespace Ae.Freezer.Internal
             return null;
         }
 
-        private Uri GetUriWithoutFragment(Uri uri) => new UriBuilder(uri) { Fragment = null }.Uri;
+        private Uri GetUriWithoutFragment(Uri originalUri, IFreezerConfiguration freezerConfiguration)
+        {
+            var builder = new UriBuilder(originalUri) { Fragment = null };
+            if (!freezerConfiguration.AllowQueryString)
+            {
+                builder.Query = null;
+            }
+
+            var processedUri = builder.Uri;
+            if (!originalUri.Equals(processedUri))
+            {
+                _logger.LogWarning("Rewriting Uri {OriginalUri} to {RewrittenUri}", originalUri, processedUri);
+            }
+
+            return processedUri;
+        }
     }
 }
