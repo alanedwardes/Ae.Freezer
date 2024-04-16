@@ -59,7 +59,7 @@ namespace Ae.Freezer.Internal
             await resourceWriter.FinishResources(resources.Select(x => x.Key).ToArray(), token);
         }
 
-        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, Uri startUri, IFreezerConfiguration freezerConfiguration, IDictionary<Uri, WebsiteResource> resources, CancellationToken token)
+        private async Task FindResourcesRecursive(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, Uri startUri, IFreezerConfiguration freezerConfiguration, ConcurrentDictionary<Uri, WebsiteResource> resources, CancellationToken token)
         {
             var startResource = await GetWebsiteResource(httpClient, resourceWriter, resources, startUri, freezerConfiguration, null, token);
             if (startResource == null || startResource.ResourceType != WebsiteResourceType.Text)
@@ -70,7 +70,7 @@ namespace Ae.Freezer.Internal
             await Task.WhenAll(_linkFinder.GetUrisFromLinks(httpClient.BaseAddress, startResource.TextContent, freezerConfiguration).Select(uri => FindResourcesRecursive(httpClient, resourceWriter, uri, freezerConfiguration, resources, token)));
         }
 
-        private async Task<WebsiteResource> GetWebsiteResource(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, IDictionary<Uri, WebsiteResource> resources, Uri uri, IFreezerConfiguration freezerConfiguration, HttpStatusCode? expectedStatusCode, CancellationToken token)
+        private async Task<WebsiteResource> GetWebsiteResource(HttpClient httpClient, IWebsiteResourceWriter resourceWriter, ConcurrentDictionary<Uri, WebsiteResource> resources, Uri uri, IFreezerConfiguration freezerConfiguration, HttpStatusCode? expectedStatusCode, CancellationToken token)
         {
             var resource = new WebsiteResource(uri);
             if (!resources.TryAdd(resource.RelativeUri, resource))
