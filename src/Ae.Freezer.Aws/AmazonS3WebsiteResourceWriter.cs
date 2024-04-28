@@ -87,8 +87,8 @@ namespace Ae.Freezer.Aws
                         CallerReference = Guid.NewGuid().ToString(),
                         Paths = new Paths
                         {
-                            Items = allWrittenKeys.Select(x => '/' + x).ToList(),
-                            Quantity = allWrittenKeys.Length
+                            Items = new List<string> { "/*" },
+                            Quantity = 1
                         }
                     }
                 };
