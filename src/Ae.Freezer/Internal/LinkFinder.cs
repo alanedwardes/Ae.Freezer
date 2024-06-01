@@ -27,7 +27,7 @@ namespace Ae.Freezer.Internal
             foreach (Group group in matches)
             {
                 var extractedUri = HttpUtility.HtmlDecode(group.Value).Trim('\'', '"');
-                var relativeUri = GetRelativeUri(baseAddress.ToString(), uri, extractedUri);
+                var relativeUri = GetRelativeUri(baseAddress, uri, extractedUri, freezerConfiguration);
                 if (relativeUri == null)
                 {
                     continue;
@@ -42,24 +42,31 @@ namespace Ae.Freezer.Internal
             return uris;
         }
 
-        private string GetRelativeUri(string baseAddress, string currentUri, string extractedUri)
+        private string GetRelativeUri(Uri baseAddress, string currentUri, string extractedUri, IFreezerConfiguration freezerConfiguration)
         {
             if (extractedUri.Contains("/..") || extractedUri.Contains("./"))
             {
-                return null;
-            }
-
-            if (extractedUri.StartsWith("//"))
-            {
+                _logger.LogCritical("Path traversials are not yet supported for {Uri}", extractedUri);
                 return null;
             }
 
             if (extractedUri.StartsWith("javascript:") || extractedUri.StartsWith("data:") || extractedUri.StartsWith("mailto:"))
             {
+                _logger.LogWarning("Unsupported URL scheme for {Uri}", extractedUri);
                 return null;
             }
 
             var uri = extractedUri.Split("#")[0];
+            if (!freezerConfiguration.AllowQueryString)
+            {
+                uri = uri.Split("?")[0];
+            }
+
+            if (uri.StartsWith("//"))
+            {
+                uri = baseAddress.Scheme + ':' + uri;
+            }
+
             if (uri.StartsWith("/"))
             {
                 return uri[1..];
@@ -67,9 +74,10 @@ namespace Ae.Freezer.Internal
 
             if (uri.StartsWith("http://") || uri.StartsWith("https://"))
             {
-                if (uri.StartsWith(baseAddress))
+                var baseAddressString = baseAddress.ToString();
+                if (uri.StartsWith(baseAddressString))
                 {
-                    return uri[baseAddress.Length..];
+                    return uri[baseAddressString.Length..];
                 }
                 else
                 {
