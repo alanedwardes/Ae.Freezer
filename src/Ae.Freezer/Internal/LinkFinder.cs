@@ -54,7 +54,7 @@ namespace Ae.Freezer.Internal
                 return null;
             }
 
-            if (extractedUri.StartsWith("javascript:") || extractedUri.StartsWith("data:"))
+            if (extractedUri.StartsWith("javascript:") || extractedUri.StartsWith("data:") || extractedUri.StartsWith("mailto:"))
             {
                 return null;
             }
