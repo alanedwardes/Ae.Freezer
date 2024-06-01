@@ -10,7 +10,7 @@ namespace Ae.Freezer.Internal
     internal sealed class LinkFinder : ILinkFinder
     {
         private static readonly Regex HTML_ATTRIBUTE_REGEX = new Regex("(href|src)=\"(?<uri>.+?)\"");
-        private static readonly Regex CSS_URL_REGEX = new Regex("(url)\\([\"']?(?<uri>.+?)[\"']?\\)");
+        private static readonly Regex CSS_URL_REGEX = new Regex("(url)\\((?<uri>.+?)\\)");
         private readonly ILogger<LinkFinder> _logger;
 
         public LinkFinder(ILogger<LinkFinder> logger)
@@ -26,20 +26,13 @@ namespace Ae.Freezer.Internal
 
             foreach (Group group in matches)
             {
-                var extractedUri = HttpUtility.HtmlDecode(group.Value);
-                if (!Uri.TryCreate(extractedUri, UriKind.RelativeOrAbsolute, out Uri createdUri))
-                {
-                    _logger.LogWarning("The following URI is invalid: {InvalidUri}", createdUri);
-                    continue;
-                }
-
-                var absoluteUri = GetValidAbsoluteUri(baseAddress, createdUri, freezerConfiguration);
-                if (absoluteUri == null)
+                var extractedUri = HttpUtility.HtmlDecode(group.Value).Trim('\'', '"');
+                var relativeUri = GetRelativeUri(baseAddress.ToString(), uri, extractedUri);
+                if (relativeUri == null)
                 {
                     continue;
                 }
 
-                var relativeUri = GetRelativeUri(baseAddress, absoluteUri);
                 if (freezerConfiguration.IsUriValid(relativeUri))
                 {
                     uris.Add(relativeUri);
@@ -49,63 +42,42 @@ namespace Ae.Freezer.Internal
             return uris;
         }
 
-        private string GetRelativeUri(Uri baseAddress, Uri uri)
+        private string GetRelativeUri(string baseAddress, string currentUri, string extractedUri)
         {
-            if (!uri.IsAbsoluteUri || !baseAddress.IsBaseOf(uri))
+            if (extractedUri.Contains("/..") || extractedUri.Contains("./"))
             {
-                throw new InvalidOperationException();
-            }
-
-            return uri.PathAndQuery.StartsWith('/') ? uri.PathAndQuery[1..] : uri.PathAndQuery;
-        }
-
-        private Uri GetValidAbsoluteUri(Uri baseAddress, Uri uri, IFreezerConfiguration freezerConfiguration)
-        {
-            Uri absoluteUri = GetAbsoluteUri(baseAddress, uri);
-            if (absoluteUri == null)
-            {
-                _logger.LogWarning($"Ignoring uri {uri}");
                 return null;
             }
 
-            if (!baseAddress.IsBaseOf(absoluteUri))
+            if (extractedUri.StartsWith("//"))
             {
-                _logger.LogDebug($"Ignoring absolute URI {uri} since it doesn't start with {baseAddress}");
                 return null;
             }
 
-            return GetUriWithoutFragment(absoluteUri, freezerConfiguration);
-        }
-
-        private Uri GetAbsoluteUri(Uri baseAddress, Uri uri)
-        {
-            if (uri.IsAbsoluteUri)
+            if (extractedUri.StartsWith("javascript:") || extractedUri.StartsWith("data:"))
             {
-                return uri;
-            }
-            else if (Uri.TryCreate(baseAddress, uri, out Uri absoluteUri))
-            {
-                return absoluteUri;
+                return null;
             }
 
-            return null;
-        }
-
-        private Uri GetUriWithoutFragment(Uri originalUri, IFreezerConfiguration freezerConfiguration)
-        {
-            var builder = new UriBuilder(originalUri) { Fragment = null };
-            if (!freezerConfiguration.AllowQueryString)
+            var uri = extractedUri.Split("#")[0];
+            if (uri.StartsWith("/"))
             {
-                builder.Query = null;
+                return uri[1..];
             }
 
-            var processedUri = builder.Uri;
-            if (!originalUri.Equals(processedUri))
+            if (uri.StartsWith("http://") || uri.StartsWith("https://"))
             {
-                _logger.LogWarning("Rewriting Uri {OriginalUri} to {RewrittenUri}", originalUri, processedUri);
+                if (uri.StartsWith(baseAddress))
+                {
+                    return uri[baseAddress.Length..];
+                }
+                else
+                {
+                    return null;
+                }
             }
 
-            return processedUri;
+            return currentUri + uri;
         }
     }
 }
