@@ -18,7 +18,7 @@ namespace Ae.Freezer
         /// <summary>
         /// The path to start at, defaults to "/"
         /// </summary>
-        Uri StartPath { get; }
+        string StartPath { get; }
         /// <summary>
         /// The regex to use to figure out links from the HTML content.
         /// </summary>
@@ -32,13 +32,17 @@ namespace Ae.Freezer
         /// </summary>
         Func<IServiceProvider, IWebsiteResourceWriter> ResourceWriter { get; }
         /// <summary>
+        /// A method invoked on each URI found, allowing it to be excluded.
+        /// </summary>
+        Func<string, bool> IsUriValid { get; }
+        /// <summary>
         /// A set of additional relative URIs of resources to add into the crawl.
         /// </summary>
-        ISet<Uri> AdditionalResources { get; }
+        ISet<string> AdditionalResources { get; }
         /// <summary>
         /// The URI of the "not found" page to use. Defaults to "errors/404".
         /// </summary>
-        Uri NotFoundPage { get; }
+        string NotFoundPage { get; }
         /// <summary>
         /// If true, don't strip query strings from found URIs. Disallowed by default since
         /// storage providers like Amazon S3 don't work well with the ? and &amp; characters.

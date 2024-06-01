@@ -48,7 +48,10 @@ namespace Ae.Freezer.Aws
                 InputStream = await websiteResource.ReadAsStream()
             };
 
-            putRequest.Headers.ContentType = websiteResource.ResponseMessage.Content.Headers.ContentType.ToString();
+            if (websiteResource.ResponseMessage.Content.Headers.ContentType != null)
+            {
+                putRequest.Headers.ContentType = websiteResource.ResponseMessage.Content.Headers.ContentType.ToString();
+            }
 
             _configuration.PutRequestModifier?.Invoke(putRequest);
 
@@ -59,7 +62,7 @@ namespace Ae.Freezer.Aws
         public Task PrepareResources() => Task.CompletedTask;
 
         /// <inheritdoc/>
-        public async Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token)
+        public async Task FinishResources(IReadOnlyCollection<string> resources, CancellationToken token)
         {
             var allWrittenKeys = resources.Select(_configuration.GenerateKey).ToArray();
 

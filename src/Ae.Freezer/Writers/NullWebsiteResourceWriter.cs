@@ -10,7 +10,7 @@ namespace Ae.Freezer.Writers
     public sealed class NullWebsiteResourceWriter : IWebsiteResourceWriter
     {
         /// <inheritdoc/>
-        public Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token) => Task.CompletedTask;
+        public Task FinishResources(IReadOnlyCollection<string> resources, CancellationToken token) => Task.CompletedTask;
         /// <inheritdoc/>
         public Task PrepareResources() => Task.CompletedTask;
         /// <inheritdoc/>

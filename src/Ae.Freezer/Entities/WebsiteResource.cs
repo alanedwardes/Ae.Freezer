@@ -16,7 +16,7 @@ namespace Ae.Freezer.Entities
         /// Construct a new <see cref="WebsiteResource"/> using the specified relative <see cref="Uri"/>.
         /// </summary>
         /// <param name="relativeUri"></param>
-        public WebsiteResource(Uri relativeUri) => RelativeUri = relativeUri;
+        public WebsiteResource(string relativeUri) => RelativeUri = relativeUri;
         /// <summary>
         /// The type of website resource this instance represents.
         /// </summary>
@@ -24,7 +24,7 @@ namespace Ae.Freezer.Entities
         /// <summary>
         /// The relative URI of this resource.
         /// </summary>
-        public Uri RelativeUri { get; }
+        public string RelativeUri { get; }
         /// <summary>
         /// If the <see cref="ResourceType"/> is <see cref="WebsiteResourceType.Text"/>, the content of this website resource.
         /// </summary>

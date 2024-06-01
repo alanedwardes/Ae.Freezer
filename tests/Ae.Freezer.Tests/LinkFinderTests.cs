@@ -1,7 +1,6 @@
 ﻿using Ae.Freezer.Internal;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
-using System.Linq;
 using Xunit;
 
 namespace Ae.Freezer.Tests
@@ -20,9 +19,9 @@ namespace Ae.Freezer.Tests
         {
             ILinkFinder linkFinder = new LinkFinder(new NullLogger<LinkFinder>());
 
-            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), Document1, new FreezerConfiguration());
+            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), "index.html", Document1, new FreezerConfiguration());
 
-            Assert.True(links.SetEquals(new[] { "test1", "test2", "test3", "test5" }.Select(x => new Uri(x, UriKind.Relative))));
+            Assert.True(links.SetEquals(new[] { "test1", "test2", "test3", "test5" }));
         }
 
         [Fact]
@@ -30,9 +29,9 @@ namespace Ae.Freezer.Tests
         {
             ILinkFinder linkFinder = new LinkFinder(new NullLogger<LinkFinder>());
 
-            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), Document1, new FreezerConfiguration { AllowQueryString = true });
+            var links = linkFinder.GetUrisFromLinks(new Uri("https://www.example.com/", UriKind.Absolute), "index.html", Document1, new FreezerConfiguration { AllowQueryString = true });
 
-            Assert.True(links.SetEquals(new[] { "test1", "test2", "test3", "test5", "test5?test=wibble" }.Select(x => new Uri(x, UriKind.Relative))));
+            Assert.True(links.SetEquals(new[] { "test1", "test2", "test3", "test5", "test5?test=wibble" }));
         }
     }
 }

@@ -29,6 +29,6 @@ namespace Ae.Freezer.Writers
         /// <param name="resources"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task FinishResources(IReadOnlyCollection<Uri> resources, CancellationToken token);
+        Task FinishResources(IReadOnlyCollection<string> resources, CancellationToken token);
     }
 }

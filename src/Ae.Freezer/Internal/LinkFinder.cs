@@ -3,12 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace Ae.Freezer.Internal
 {
     internal sealed class LinkFinder : ILinkFinder
     {
-        private static readonly Regex URI_REGEX = new Regex("(href|src)=\"(?<uri>.+?)\"");
+        private static readonly Regex HTML_ATTRIBUTE_REGEX = new Regex("(href|src)=\"(?<uri>.+?)\"");
+        private static readonly Regex CSS_URL_REGEX = new Regex("(url)\\([\"']?(?<uri>.+?)[\"']?\\)");
         private readonly ILogger<LinkFinder> _logger;
 
         public LinkFinder(ILogger<LinkFinder> logger)
@@ -16,28 +18,45 @@ namespace Ae.Freezer.Internal
             _logger = logger;
         }
 
-        public ISet<Uri> GetUrisFromLinks(Uri baseAddress, string body, IFreezerConfiguration freezerConfiguration)
+        public ISet<string> GetUrisFromLinks(Uri baseAddress, string uri, string body, IFreezerConfiguration freezerConfiguration)
         {
-            var uris = new HashSet<Uri>();
+            var uris = new HashSet<string>();
 
-            foreach (Group group in URI_REGEX.Matches(body).Select(x => x.Groups["uri"]))
+            var matches = new[] { HTML_ATTRIBUTE_REGEX, CSS_URL_REGEX }.SelectMany(x => x.Matches(body)).Select(x => x.Groups["uri"]);
+
+            foreach (Group group in matches)
             {
-                if (!Uri.TryCreate(group.Value, UriKind.RelativeOrAbsolute, out Uri uri))
+                var extractedUri = HttpUtility.HtmlDecode(group.Value);
+                if (!Uri.TryCreate(extractedUri, UriKind.RelativeOrAbsolute, out Uri createdUri))
                 {
-                    _logger.LogWarning("The following URI is invalid: {InvalidUri}", uri);
+                    _logger.LogWarning("The following URI is invalid: {InvalidUri}", createdUri);
                     continue;
                 }
 
-                var absoluteUri = GetValidAbsoluteUri(baseAddress, uri, freezerConfiguration);
+                var absoluteUri = GetValidAbsoluteUri(baseAddress, createdUri, freezerConfiguration);
                 if (absoluteUri == null)
                 {
                     continue;
                 }
 
-                uris.Add(baseAddress.MakeRelativeUri(absoluteUri));
+                var relativeUri = GetRelativeUri(baseAddress, absoluteUri);
+                if (freezerConfiguration.IsUriValid(relativeUri))
+                {
+                    uris.Add(relativeUri);
+                }
             }
 
             return uris;
+        }
+
+        private string GetRelativeUri(Uri baseAddress, Uri uri)
+        {
+            if (!uri.IsAbsoluteUri || !baseAddress.IsBaseOf(uri))
+            {
+                throw new InvalidOperationException();
+            }
+
+            return uri.PathAndQuery.StartsWith('/') ? uri.PathAndQuery[1..] : uri.PathAndQuery;
         }
 
         private Uri GetValidAbsoluteUri(Uri baseAddress, Uri uri, IFreezerConfiguration freezerConfiguration)
