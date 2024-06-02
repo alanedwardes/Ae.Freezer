@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -9,7 +11,6 @@ namespace Ae.Freezer.Internal
 {
     internal sealed class LinkFinder : ILinkFinder
     {
-        private static readonly Regex HTML_ATTRIBUTE_REGEX = new Regex("(href|src)=\"(?<uri>.+?)\"");
         private static readonly Regex CSS_URL_REGEX = new Regex("(url)\\((?<uri>.+?)\\)");
         private readonly ILogger<LinkFinder> _logger;
 
@@ -22,12 +23,27 @@ namespace Ae.Freezer.Internal
         {
             var uris = new HashSet<string>();
 
-            var matches = new[] { HTML_ATTRIBUTE_REGEX, CSS_URL_REGEX }.SelectMany(x => x.Matches(body)).Select(x => x.Groups["uri"]);
+            var doc = new HtmlDocument();
+            doc.LoadHtml(body);
 
-            foreach (Group group in matches)
+            IEnumerable<string> GetAttributeFromNodes(string selector, string attribute)
             {
-                var extractedUri = HttpUtility.HtmlDecode(group.Value).Trim('\'', '"');
-                var relativeUri = GetRelativeUri(baseAddress, uri, extractedUri, freezerConfiguration);
+                foreach (var node in doc.DocumentNode.SelectNodes(selector) ?? Enumerable.Empty<HtmlNode>())
+                {
+                    var value = node.GetAttributeValue(attribute, string.Empty);
+                    yield return HttpUtility.HtmlDecode(value);
+                }
+            }
+
+            var linkHrefs = GetAttributeFromNodes(".//link[@href!='']", "href");
+            var aHrefs = GetAttributeFromNodes(".//a[@href!='']", "href");
+            var imgSrcs = GetAttributeFromNodes(".//img[@src!='']", "src");
+            var imgSets = GetAttributeFromNodes(".//img[@srcset!='']", "srcset").Select(x => x.Split(",")).SelectMany(x => x).Select(x => x.Trim().Split()[0]);
+            var matches = CSS_URL_REGEX.Matches(body).Select(x => x.Groups["uri"]).Select(x => x.Value.Trim('\'', '"'));
+
+            foreach (var possibleUrl in new[] { linkHrefs, aHrefs, imgSrcs, imgSets, matches }.SelectMany(x => x))
+            {
+                var relativeUri = GetRelativeUri(baseAddress, uri, possibleUrl, freezerConfiguration);
                 if (relativeUri == null)
                 {
                     continue;
