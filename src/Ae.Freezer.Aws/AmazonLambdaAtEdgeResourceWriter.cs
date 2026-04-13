@@ -1,4 +1,4 @@
-﻿using Ae.Freezer.Aws.Internal;
+using Ae.Freezer.Aws.Internal;
 using Ae.Freezer.Entities;
 using Ae.Freezer.Writers;
 using Amazon.CloudFront;
@@ -233,7 +233,7 @@ namespace Ae.Freezer.Aws
             var functionAssociation = functionAssociations.Items.SingleOrDefault(x => x.EventType == _configuration.LambdaEventType);
             if (functionAssociation == null)
             {
-                functionAssociation = new LambdaFunctionAssociation { EventType = EventType.OriginRequest };
+                functionAssociation = new LambdaFunctionAssociation { EventType = Amazon.CloudFront.EventType.OriginRequest };
                 functionAssociations.Items.Add(functionAssociation);
                 functionAssociations.Quantity++;
             }
