@@ -16,8 +16,21 @@ namespace Ae.Freezer.BunnyCdn
     public sealed class BunnyCdnWebsiteResourceWriter : IWebsiteResourceWriter
     {
         private readonly ILogger<BunnyCdnWebsiteResourceWriter> _logger;
-        private readonly BunnyCDNStorage _bunnyCdnStorage;
+        private readonly IBunnyCdnStorage _bunnyCdnStorage;
         private readonly BunnyCdnWebsiteResourceWriterConfiguration _configuration;
+
+        /// <summary>
+        /// Construct a new <see cref="BunnyCdnWebsiteResourceWriter"/> using the specified <see cref="IBunnyCdnStorage"/> client and <see cref="BunnyCdnWebsiteResourceWriterConfiguration"/> object.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="configuration"></param>
+        /// <param name="bunnyCdnStorage"></param>
+        public BunnyCdnWebsiteResourceWriter(ILogger<BunnyCdnWebsiteResourceWriter> logger, BunnyCdnWebsiteResourceWriterConfiguration configuration, IBunnyCdnStorage bunnyCdnStorage)
+        {
+            _logger = logger;
+            _bunnyCdnStorage = bunnyCdnStorage;
+            _configuration = configuration;
+        }
 
         /// <summary>
         /// Construct a new <see cref="BunnyCdnWebsiteResourceWriter"/> using the specified <see cref="BunnyCDNStorage"/> client and <see cref="BunnyCdnWebsiteResourceWriterConfiguration"/> object.
@@ -26,10 +39,8 @@ namespace Ae.Freezer.BunnyCdn
         /// <param name="configuration"></param>
         /// <param name="bunnyCdnStorage"></param>
         public BunnyCdnWebsiteResourceWriter(ILogger<BunnyCdnWebsiteResourceWriter> logger, BunnyCdnWebsiteResourceWriterConfiguration configuration, BunnyCDNStorage bunnyCdnStorage)
+            : this(logger, configuration, new BunnyCdnStorageWrapper(bunnyCdnStorage))
         {
-            _logger = logger;
-            _bunnyCdnStorage = bunnyCdnStorage;
-            _configuration = configuration;
         }
 
         /// <inheritdoc/>

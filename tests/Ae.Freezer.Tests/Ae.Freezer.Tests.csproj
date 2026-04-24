@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ae.Freezer\Ae.Freezer.csproj" />
+    <ProjectReference Include="..\..\src\Ae.Freezer.BunnyCdn\Ae.Freezer.BunnyCdn.csproj" />
   </ItemGroup>
 
 </Project>

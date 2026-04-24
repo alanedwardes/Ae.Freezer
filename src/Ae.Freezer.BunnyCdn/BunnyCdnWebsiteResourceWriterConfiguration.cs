@@ -26,9 +26,10 @@ namespace Ae.Freezer.BunnyCdn
         /// </summary>
         public static readonly Func<string, string> DefaultKeyGenerator = relativeUri =>
         {
-            if (relativeUri == string.Empty) return "index.html";
-            if (relativeUri.EndsWith("/")) return relativeUri + "index.html";
-            return relativeUri;
+            var trimmed = relativeUri.TrimStart('/');
+            if (trimmed == string.Empty) return "index.html";
+            if (trimmed.EndsWith("/")) return trimmed + "index.html";
+            return trimmed;
         };
     }
 }
